@@ -460,7 +460,8 @@ class Decompiler(object):
             callable_ = self
         else:
             args.insert(0, self)
-        return ast.Call(callable_, args, keywords)
+        decompiler.stack.append(callable_)
+        return decompiler._call_function(args, keywords)
 
     def CALL_FUNCTION_VAR(decompiler, argc):
         return decompiler.CALL_FUNCTION(argc, decompiler.stack.pop())

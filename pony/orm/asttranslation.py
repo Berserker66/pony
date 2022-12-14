@@ -217,8 +217,7 @@ class PythonTranslator(ASTTranslator):
         node.priority = 2
         if len(node.args) == 1 and isinstance(node.args[0], ast.GeneratorExp):
             return node.func.src + node.args[0].src
-        keywords = node.keywords or []
-        args = [ arg.src for arg in node.args ] + [ kw.src for kw in keywords ]
+        args = [ arg.src for arg in node.args ] + [ kw.src for kw in node.keywords ]
         return '%s(%s)' % (node.func.src, ', '.join(args))
     def postkeyword(translator, node):
         if node.arg is None:
@@ -429,8 +428,7 @@ class PreTranslator(ASTTranslator):
                     return
             if any(not arg.constant for arg in node.args if isinstance(arg, ast.Starred)):
                 return
-            keywords = node.keywords or []
-            if any(not kwarg.constant for kwarg in keywords if kwarg.arg is None):
+            if any(not kwarg.constant for kwarg in node.keywords if kwarg.arg is None):
                 return
             node.constant = True
     def postCompare(translator, node):

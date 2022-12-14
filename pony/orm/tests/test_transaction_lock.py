@@ -7,13 +7,13 @@ from pony.orm.tests import setup_database, teardown_database
 db = Database()
 
 
-class TestPost(db.Entity):
-    category = Optional('TestCategory')
+class MockPost(db.Entity):
+    category = Optional('MockCategory')
     name = Optional(str, default='Noname')
 
 
-class TestCategory(db.Entity):
-    posts = Set(TestPost)
+class MockCategory(db.Entity):
+    posts = Set(MockPost)
 
 
 class TransactionLockTestCase(unittest.TestCase):
@@ -21,7 +21,7 @@ class TransactionLockTestCase(unittest.TestCase):
     def setUpClass(cls):
         setup_database(db)
         with db_session:
-            cls.post = TestPost(id=1)
+            cls.post = MockPost(id=1)
 
     @classmethod
     def tearDownClass(cls):
@@ -33,14 +33,14 @@ class TransactionLockTestCase(unittest.TestCase):
         rollback()
 
     def test_create(self):
-        p = TestPost(id=2)
+        p = MockPost(id=2)
         p.flush()
         cache = db._get_cache()
         self.assertEqual(cache.immediate, True)
         self.assertEqual(cache.in_transaction, True)
 
     def test_update(self):
-        p = TestPost[self.post.id]
+        p = MockPost[self.post.id]
         p.name = 'Trash'
         p.flush()
         cache = db._get_cache()
@@ -48,7 +48,7 @@ class TransactionLockTestCase(unittest.TestCase):
         self.assertEqual(cache.in_transaction, True)
 
     def test_delete(self):
-        p = TestPost[self.post.id]
+        p = MockPost[self.post.id]
         p.delete()
         flush()
         cache = db._get_cache()

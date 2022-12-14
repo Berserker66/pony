@@ -3,14 +3,14 @@ from __future__ import absolute_import, print_function, division
 import unittest
 from pony.orm.sqlbuilding import SQLBuilder
 from pony.orm.dbapiprovider import DBAPIProvider
-from pony.orm.tests.testutils import TestPool
+from pony.orm.tests.testutils import MockPool
 
 
 class TestFormatStyles(unittest.TestCase):
     def setUp(self):
         self.key1 = 'KEY1'
         self.key2 = 'KEY2'
-        self.provider = DBAPIProvider(_database=None, pony_pool_mockup=TestPool(None))
+        self.provider = DBAPIProvider(_database=None, pony_pool_mockup=MockPool(None))
         self.ast = [ 'SELECT', [ 'ALL', ['COLUMN', None, 'A']], [ 'FROM', [None, 'TABLE', 'T1']],
                      [ 'WHERE', [ 'EQ', ['COLUMN', None, 'B'], [ 'PARAM', self.key1 ] ],
                               [ 'EQ', ['COLUMN', None, 'C'], [ 'PARAM', self.key2 ] ],

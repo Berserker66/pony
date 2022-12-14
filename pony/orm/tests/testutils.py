@@ -6,7 +6,7 @@ from contextlib import contextmanager
 from pony.orm.core import Database
 from pony.utils import import_module
 
-def test_exception_msg(test_case, exc_msg, test_msg=None):
+def check_exception_msg(test_case, exc_msg, test_msg=None):
     if test_msg is None: return
     error_template = "incorrect exception message. expected '%s', got '%s'"
     error_msg = error_template % (test_msg, exc_msg)
@@ -30,7 +30,7 @@ def raises_exception(exc_class, test_msg=None):
                 test_case.fail("Expected exception %s wasn't raised" % exc_class.__name__)
             except exc_class as e:
                 if not e.args: test_case.assertEqual(test_msg, None)
-                else: test_exception_msg(test_case, str(e), test_msg)
+                else: check_exception_msg(test_case, str(e), test_msg)
         wrapper.__name__ = func.__name__
         return wrapper
     return decorator
@@ -41,7 +41,7 @@ def raises_if(test_case, cond, exc_class, test_msg=None):
         yield
     except exc_class as e:
         test_case.assertTrue(cond)
-        test_exception_msg(test_case, str(e), test_msg)
+        check_exception_msg(test_case, str(e), test_msg)
     else:
         test_case.assertFalse(cond, "Expected exception %s wasn't raised" % exc_class.__name__)
 
@@ -54,7 +54,7 @@ def flatten(x):
             result.append(el)
     return result
 
-class TestConnection(object):
+class MockConnection(object):
     def __init__(con, database):
         con.database = database
         if database and database.provider_name == 'postgres':
@@ -66,7 +66,7 @@ class TestConnection(object):
     def cursor(con):
         return test_cursor
 
-class TestCursor(object):
+class MockCursor(object):
     def __init__(cursor):
         cursor.description = []
         cursor.rowcount = 0
@@ -79,13 +79,13 @@ class TestCursor(object):
     def fetchall(cursor):
         return []
 
-test_cursor = TestCursor()
+test_cursor = MockCursor()
 
-class TestPool(object):
+class MockPool(object):
     def __init__(pool, database):
         pool.database = database
     def connect(pool):
-        return TestConnection(pool.database), True
+        return MockConnection(pool.database), True
     def release(pool, con):
         pass
     def drop(pool, con):
@@ -93,7 +93,7 @@ class TestPool(object):
     def disconnect(pool):
         pass
 
-class TestDatabase(Database):
+class MockDatabase(Database):
     real_provider_name = None
     raw_server_version = None
     sql = None
@@ -127,7 +127,7 @@ class TestDatabase(Database):
         TestProvider.server_version = server_version
 
         kwargs['pony_check_connection'] = False
-        kwargs['pony_pool_mockup'] = TestPool(self)
+        kwargs['pony_pool_mockup'] = MockPool(self)
         Database.bind(self, TestProvider, *args, **kwargs)
     def _execute(database, sql, globals, locals, frame_depth):
         assert False  # pragma: no cover

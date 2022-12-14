@@ -19,7 +19,7 @@ with db_session:
     Person(name='Mike')
 
 
-class TestThread(threading.Thread):
+class MockThread(threading.Thread):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, *kwargs)
         self.result = []
@@ -31,7 +31,7 @@ class TestThread(threading.Thread):
 
 class TestFlush(unittest.TestCase):
     def test1(self):
-        thread1 = TestThread()
+        thread1 = MockThread()
         thread1.start()
         thread1.join()
         self.assertEqual(set(thread1.result), {'John', 'Mike'})

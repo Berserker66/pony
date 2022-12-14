@@ -42,9 +42,9 @@ unavailable_providers = set()
 
 def do_test(provider_name, raw_server_version):
     if provider_name in unavailable_providers: return
-    testutils.TestDatabase.real_provider_name = provider_name
-    testutils.TestDatabase.raw_server_version = raw_server_version
-    core.Database = orm.Database = testutils.TestDatabase
+    testutils.MockDatabase.real_provider_name = provider_name
+    testutils.MockDatabase.raw_server_version = raw_server_version
+    core.Database = orm.Database = testutils.MockDatabase
     sys.modules.pop(module_name, None)
     try: __import__(module_name)
     except ImportError as e:

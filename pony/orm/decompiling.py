@@ -449,7 +449,7 @@ class Decompiler(object):
         decompiler.kw_names = None
 
         args = values
-        keywords = None
+        keywords = []
         if keys:
             args = values[:-len(keys)]
             keywords = [ast.keyword(k, v) for k, v in zip(keys, values[-len(keys):])]
@@ -728,8 +728,7 @@ class Decompiler(object):
         return ast.Name(varname, ast.Load())
 
     def MAKE_CELL(decompiler, freevar):
-        decompiler.names.add(freevar)
-        return ast.Name(freevar, ast.Load())
+        pass
 
     def MAKE_CLOSURE(decompiler, argc):
         decompiler.stack[-3:-2] = []  # ignore freevars

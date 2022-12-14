@@ -41,7 +41,6 @@ def decompile(x):
     if result is None:
         decompiler = Decompiler(codeobject)
         result = decompiler.ast, decompiler.external_names
-        print(ast.dump(decompiler.ast))
         ast_cache[key] = result
     return result + (cells,)
 
@@ -615,6 +614,37 @@ class Decompiler(object):
         decompiler.targets.setdefault(endpos, clause)
         return clause
 
+    def conditional_jump_none_impl(decompiler, endpos, negate):
+        expr = decompiler.stack.pop()
+        op = ast.Is
+        if decompiler.pos >= decompiler.conditions_end:
+            clausetype = ast.And if negate else ast.Or
+        elif decompiler.pos in decompiler.or_jumps:
+            clausetype = ast.Or
+            if negate:
+                op = ast.IsNot
+        else:
+            clausetype = ast.And
+            if negate:
+                op = ast.IsNot
+        expr = ast.Compare(expr, [op()], [ast.Constant(None)])
+        decompiler.stack.append(expr)
+
+        if decompiler.next_pos in decompiler.targets:
+            decompiler.process_target(decompiler.next_pos)
+
+        expr = decompiler.stack.pop()
+        clause = ast.BoolOp(op=clausetype(), values=[expr])
+        clause.endpos = endpos
+        decompiler.targets.setdefault(endpos, clause)
+        return clause
+
+    def jump_if_none(decompiler, endpos):
+        return decompiler.conditional_jump_none_impl(endpos, True)
+
+    def jump_if_not_none(decompiler, endpos):
+        return decompiler.conditional_jump_none_impl(endpos, False)
+
     def process_target(decompiler, pos, partial=False):
         if pos is None:
             limit = None
@@ -787,10 +817,10 @@ class Decompiler(object):
     POP_JUMP_FORWARD_IF_TRUE = JUMP_IF_TRUE
     POP_JUMP_IF_FALSE = JUMP_IF_FALSE
     POP_JUMP_IF_TRUE = JUMP_IF_TRUE
-    POP_JUMP_BACKWARD_IF_NONE = JUMP_IF_FALSE
-    POP_JUMP_BACKWARD_IF_NOT_NONE = JUMP_IF_TRUE
-    POP_JUMP_FORWARD_IF_NONE = JUMP_IF_FALSE
-    POP_JUMP_FORWARD_IF_NOT_NONE = JUMP_IF_TRUE
+    POP_JUMP_BACKWARD_IF_NONE = jump_if_none
+    POP_JUMP_BACKWARD_IF_NOT_NONE = jump_if_not_none
+    POP_JUMP_FORWARD_IF_NONE = jump_if_none
+    POP_JUMP_FORWARD_IF_NOT_NONE = jump_if_not_none
 
     def POP_TOP(decompiler):
         pass

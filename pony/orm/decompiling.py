@@ -1,5 +1,5 @@
 from __future__ import absolute_import, print_function, division
-from pony.py23compat import PY37, PYPY, PY38, PY39, PY310
+from pony.py23compat import PY37, PYPY, PY38, PY39, PY310, PY311
 
 import sys, types, inspect
 from opcode import opname as opnames, HAVE_ARGUMENT, EXTENDED_ARG, cmp_op
@@ -41,6 +41,7 @@ def decompile(x):
     if result is None:
         decompiler = Decompiler(codeobject)
         result = decompiler.ast, decompiler.external_names
+        print(ast.dump(decompiler.ast))
         ast_cache[key] = result
     return result + (cells,)
 
@@ -165,7 +166,6 @@ class Decompiler(object):
             throw(DecompileError, 'Compiled code should represent a single expression')
     def get_instructions(decompiler):
         PY36 = sys.version_info >= (3, 6)
-        PY311 = sys.version_info >= (3, 11)
         before_yield = True
         code = decompiler.code
         co_code = code.co_code
@@ -631,6 +631,10 @@ class Decompiler(object):
                 break
             if not decompiler.stack:
                 break
+            if decompiler.stack[-1] is None:
+                decompiler.stack.pop()
+                if not decompiler.stack:
+                    break
             top2 = decompiler.stack[-1]
             if isinstance(top2, ast.comprehension):
                 break
@@ -719,7 +723,10 @@ class Decompiler(object):
         return ast.Name(varname, ast.Load())
 
     def LOAD_METHOD(decompiler, methname):
-        return decompiler.LOAD_ATTR(methname)
+        result = decompiler.LOAD_ATTR(methname)
+        if PY311:
+            decompiler.stack.append(None)
+        return result
 
     LOOKUP_METHOD = LOAD_METHOD  # For PyPy
 
@@ -737,7 +744,7 @@ class Decompiler(object):
     def MAKE_FUNCTION(decompiler, argc):
         defaults = []
         if sys.version_info >= (3, 6):
-            if sys.version_info < (3, 11):
+            if not PY311:
                 qualname = decompiler.stack.pop()
             tos = decompiler.stack.pop()
             if argc & 0x08:

@@ -727,6 +727,10 @@ class Decompiler(object):
         decompiler.names.add(varname)
         return ast.Name(varname, ast.Load())
 
+    def MAKE_CELL(decompiler, freevar):
+        decompiler.names.add(freevar)
+        return ast.Name(freevar, ast.Load())
+
     def MAKE_CLOSURE(decompiler, argc):
         decompiler.stack[-3:-2] = []  # ignore freevars
         return decompiler.MAKE_FUNCTION(argc)

@@ -1058,7 +1058,8 @@ class SQLTranslator(ASTTranslator):
         for arg in node.args:
             if isinstance(arg, ast.Starred):
                 throw(NotImplementedError, '%s is not supported' % ast2src(arg))
-        if any(kwarg.arg is None for kwarg in node.keywords):
+        keywords = node.keywords or []
+        if any(kwarg.arg is None for kwarg in keywords):
             throw(NotImplementedError, '**%s is not supported' % ast2src(node.dstar_args))
         func_node = node.func
         if isinstance(func_node, ast.Call):
@@ -1115,7 +1116,8 @@ class SQLTranslator(ASTTranslator):
             if isinstance(arg, ast.Starred):
                 throw(NotImplementedError, arg.src)
             args.append(arg.monad)
-        for kw in node.keywords:
+        keywords = node.keywords or []
+        for kw in keywords:
             if kw.arg is None:
                 throw(NotImplementedError, kw.src)
             kwargs[kw.arg] = kw.value.monad
